@@ -1,0 +1,21 @@
+extends layout
+
+block content
+  h1= title
+  if (user)
+    p Welcome #{user.username}
+  if (!user)
+    p Welcome to #{title}
+
+  ul
+    li
+      a(href='/login') Login
+    li
+      a(href='/signup') Sing Up
+    li
+      a(href='/secrets') Secret Info
+
+  if (user)
+    ul
+      li
+        a(href='/logout') Logout

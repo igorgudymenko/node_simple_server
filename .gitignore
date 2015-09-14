@@ -1,0 +1,8 @@
+.idea
+node_modules/
+bower_components/
+.sass-cache/
+.tmp/
+dist/
+data/
+*.iml
