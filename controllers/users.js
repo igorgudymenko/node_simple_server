@@ -7,9 +7,15 @@ var router = express.Router();
 var _ = require('lodash');
 var async = require('async');
 var crypto = require('crypto');
+var base64url = require('base64url');
+var jwt = require("jsonwebtoken");
 var passport = require('passport');
 var User = require('../models/User');
 var secrets = require('../config/secrets');
+
+function randomStringAsBase64Url(size) {
+  return crypto.randomBytes(size).toString('base64');
+}
 
 /* GET /login */
 exports.getLogin = function(req, res) {
@@ -94,6 +100,81 @@ exports.postSingUp = function(req, res) {
         res.redirect('/');
       });
     });
+  });
+};
+
+
+/* post ng-singnup */
+exports.postNgSignup = function(req, res, next) {
+  debugger;
+};
+
+
+/* post ng-signin */
+exports.postNgSignin = function(req, res, next) {
+  //debugger;
+  User.findOne({email: req.body.email, password: req.body.password}, function(err, user) {
+    if (err) {
+      res.json({
+        type: false,
+        data: "Error occured: " + err
+      });
+    } else {
+      if (user) {
+        res.json({
+          type: false,
+          data: "User already exists!"
+        });
+      } else {
+        var userModel = new User();
+        userModel.email = req.body.email;
+        userModel.password = req.body.password;
+        userModel.save(function(err, user) {
+          user.token = jwt.sign(user, 'Your Session Secret goes here');
+          user.save(function(err, user1) {
+            res.json({
+              type: true,
+              data: user1,
+              token: user1.token
+            });
+          });
+        })
+      }
+    }
+  });
+};
+
+exports.getRestricted = function(req, res, next) {
+  console.log('restricted req: ', req.headers);
+  User.findOne({token: req.token}, function(err, user) {
+    if (err) {
+      res.json({
+        type: false,
+        data: "Error occured: " + err
+      });
+    } else {
+      res.json({
+        type: true,
+        data: user
+      });
+    }
+  });
+};
+
+exports.getApiRestricted = function(req, res, next) {
+  console.log('restricted api req: ', req.headers);
+  User.findOne({token: req.token}, function(err, user) {
+    if (err) {
+      res.json({
+        type: false,
+        data: "Error occured: " + err
+      });
+    } else {
+      res.json({
+        type: true,
+        data: user
+      });
+    }
   });
 };
 

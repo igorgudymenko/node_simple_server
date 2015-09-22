@@ -51,9 +51,18 @@ var secretCtrl = require('./controllers/secrets');
 /**
  * Express configuration.
  */
-app.set('port', process.env.PORT || 3000);
+//CORS middleware
+var allowCrossDomain = function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+  next();
+};
+app.set('port', process.env.PORT || 4000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
+app.use(allowCrossDomain);
 app.use(compress());
 app.use(connectAssets({
     paths: [path.join(__dirname, 'public/css'), path.join(__dirname, 'public/js')]
@@ -74,11 +83,11 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
-app.use(lusca({
-    csrf: true,
-    xframe: 'SAMEORIGIN',
-    xssProtection: true
-}));
+//app.use(lusca({
+//    csrf: true,
+//    xframe: 'SAMEORIGIN',
+//    xssProtection: true
+//}));
 app.use(function(req, res, next) {
     res.locals.user = req.user;
     next();
@@ -96,6 +105,29 @@ app.get('/signup', usersCtrl.getSignUp);
 app.post('/signup', usersCtrl.postSingUp);
 app.get('/secrets', secretCtrl.getSecret);
 app.post('/secrets', secretCtrl.getSecret);
+
+/* test */
+app.post('/ng-signin', usersCtrl.postNgSignin);
+app.post('/ng-signup', usersCtrl.postNgSignup);
+app.get('/restricted', ensureAuthorized, usersCtrl.getRestricted);
+app.get('/api/restricted', ensureAuthorized, usersCtrl.getApiRestricted);
+
+function ensureAuthorized(req, res, next) {
+  var bearerToken;
+  var bearerHeader = req.headers["authorization"];
+  if (typeof bearerHeader !== 'undefined') {
+    var bearer = bearerHeader.split(" ");
+    bearerToken = bearer[1];
+    req.token = bearerToken;
+    next();
+  } else {
+    res.send(403);
+  }
+}
+process.on('uncaughtException', function(err) {
+  console.log(err);
+});
+
 
 /**
  * Error handler
